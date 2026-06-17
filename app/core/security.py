@@ -2,15 +2,18 @@ from datetime import UTC , datetime ,timedelta
 from pydantic import SecretStr
 from pwdlib import PasswordHash 
 import jwt
-from fastapi.security import OAuth2AuthorizationCodeBearer
-
+from fastapi.security import OAuth2PasswordBearer
+from fastapi import HTTPException ,status , Depends
 from .config import settings
-
+from sqlalchemy.orm import Session
+from ..models.login_db import Login
+from jwt.exceptions import InvalidTokenError
+from ..db.database import get_db
+from typing import Annotated
 
 password_hash =PasswordHash.recommended()
 
-oauth2_scheme = OAuth2AuthorizationCodeBearer(
-    authorizationUrl="/",
+oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/login/Token"
     )
 
@@ -52,3 +55,39 @@ def verify_access_token(token : str )-> str | None:
         return None
     else:
         return payload.get("sub")
+    
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY.get_secret_value(),
+            algorithms=[settings.algorithm]
+        )
+
+        email = payload.get("sub")
+
+        if email is None:
+            raise credentials_exception
+
+    except InvalidTokenError:
+        raise credentials_exception
+
+    user = db.query(Login).filter(
+        Login.email == email
+    ).first()
+
+    if user is None:
+        raise credentials_exception
+
+    return user
+
+Current_user = Annotated[Login , Depends(get_current_user)]

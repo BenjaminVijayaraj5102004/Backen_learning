@@ -1,23 +1,24 @@
 from fastapi import APIRouter ,Depends ,HTTPException
 from ..schema.token import Token
-from ..schema.loggin import Loggin
-from ..core.security import create_access_token,verify_access_token,verfiy_password
+from ..core.security import create_access_token,verfiy_password
 from ..models.login_db import Login 
 from ..db.database import get_db , Base , engine
 from sqlalchemy.orm import Session
 from ..core.security import oauth2_scheme
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter()
 
 @router.post("/login/Token" , response_model=Token )
 
 def check_authention(
-    loggin: Loggin,
+    form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
+    
 ):
     db_user = (
         db.query(Login)
-        .filter(Login.email == loggin.email)
+        .filter(Login.email == form_data.username)
         .first()
     )
 
@@ -28,7 +29,7 @@ def check_authention(
         )
 
     if not verfiy_password(
-        loggin.password,
+        form_data.password,
         db_user.password
     ):
         raise HTTPException(
