@@ -15,3 +15,10 @@ class Profile_response(BaseModel):
     email : EmailStr
     course_enrolled : str 
     department : str 
+
+
+class Profile_Update(BaseModel):
+    name : str | None = None
+    age : int | None = None
+    email : EmailStr | None = None
+

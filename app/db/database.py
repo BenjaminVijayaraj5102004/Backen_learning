@@ -4,17 +4,7 @@ from sqlalchemy.engine import URL
 from ..core.config import settings
 
 
-
-DATABASE_URL = URL.create(
-    drivername="postgresql+psycopg2",
-    username=settings.DB_USERNAME,
-    password=settings.DB_PASSWORD,
-    host=settings.DB_HOST,
-    port=settings.DB_PORT,
-    database=settings.DB_NAME
-)
-
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(settings.DATABASE_URL, echo=True)
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -33,4 +23,3 @@ def get_db():
     finally:
         db.close()
 
-print(DATABASE_URL)

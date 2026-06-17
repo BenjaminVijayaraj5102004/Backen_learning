@@ -11,12 +11,12 @@ router = APIRouter()
 Base.metadata.create_all(bind=engine)
 
 @router.put("/login/profile" , response_model=Profile_response)
-def profile_section(profiles : Profile ,current_user: Current_user, db : Session=Depends(get_db)):
+def profile_section(profiles : Profile , current_user: Current_user,db : Session=Depends(get_db)):
     profiles =  profile(
         reg_number= profiles.reg_number,
         name = profiles.name,
         age = profiles.age,
-        email = Current_user.email,
+        email = profiles.email,
         course_enrolled= profiles.course_enrolled,
         department= profiles.department
     )
